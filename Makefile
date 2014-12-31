@@ -10,12 +10,22 @@ INCLUDE_PATH=include
 
 EXECUTABLE=vke
 
+PREFIX=$(DEST_DIR)/usr/local
+BIN_PATH=$(PREFIX)/bin
+
 #-------------------------------------------------------------------------------
 
 all: $(EXECUTABLE)
 
 clean:
-	 rm -f $(BUILD_PATH)/$(EXECUTABLE) $(OBJECT_PATH)/*.o
+	rm -f $(BUILD_PATH)/$(EXECUTABLE) $(OBJECT_PATH)/*.o
+	 
+install: $(EXECUTABLE)
+	install -D $(BUILD_PATH)/$(EXECUTABLE) $(BIN_PATH)/$(EXECUTABLE)
+
+#---	
+
+.PHONY: all clean install
 
 #-------------------------------------------------------------------------------
 
