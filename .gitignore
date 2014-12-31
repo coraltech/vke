@@ -36,6 +36,7 @@ build
 
 # For Eclipse IDE:
 .project
+.cproject
 .buildpath
 .cache
 .settings
