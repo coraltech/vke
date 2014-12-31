@@ -53,6 +53,7 @@ typedef struct config {
   bool dry_run;
   unsigned int src_indx;
   unsigned int key_indx;
+  unsigned int key_length;
   struct layer* keys;
 } config;
 
@@ -108,7 +109,7 @@ int main(int argc, char* argv[]) {
 
   process_args(&cfg, argc, argv);
 
-  if (argc > 1
+  if (cfg.key_length
       && (!initialize(&cfg, &src, argv[cfg.src_indx], 0, "rb+", true))) {
     cfg.show_help = true;
   }
@@ -177,13 +178,14 @@ int main(int argc, char* argv[]) {
  * Process CLI arguments
  */
 void process_args(config* cfg, int argc, char* argv[]) {
-  cfg->show_help = false;
-  cfg->dry_run = false;
-  cfg->src_indx = 1;
-  cfg->key_indx = 2;
-  cfg->keys = NULL;
+  cfg->show_help  = false;
+  cfg->dry_run    = false;
+  cfg->src_indx   = 1;
+  cfg->key_indx   = 2;
+  cfg->key_length = 0;
+  cfg->keys       = NULL;
 
-  int arg_indx = 1;
+  int arg_indx   = 1;
   int arg_layers = 0;
 
   while (arg_indx < argc) {
@@ -206,6 +208,8 @@ void process_args(config* cfg, int argc, char* argv[]) {
     cfg->show_help = true;
   }
   if (arg_layers) {
+    cfg->key_length  = arg_layers - 1;
+
     layer* src_layer = cfg->keys;
     cfg->keys = cfg->keys->next;
     free(src_layer);
