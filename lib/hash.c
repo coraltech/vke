@@ -19,5 +19,5 @@ char* get_hash(char* input) {
   rhash_sha3_update(ctx, input, strlen(input));
   rhash_sha3_final(ctx, NULL);
 
-  return (char *)ctx->hash;
+  return (char*)ctx->hash;
 }

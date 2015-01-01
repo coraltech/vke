@@ -1,5 +1,5 @@
-#ifndef VKE_DATA_ALREADY_DEFINED
-#define VKE_DATA_ALREADY_DEFINED
+#ifndef VKE_DATA_DEFINED
+#define VKE_DATA_DEFINED
 
 //------------------------------------------------------------------------------
 // Dependencies
@@ -22,6 +22,7 @@ typedef struct obj {
   unsigned int size;
   unsigned int indx;
   char* buff;
+  unsigned int threshold;
   char* hash;
   char* rev_str;
   char* rev_hash;

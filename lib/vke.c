@@ -8,12 +8,10 @@
 #include <unistd.h>  // getpass
 #include <time.h>    // CLOCKS_PER_SEC, clock_t, clock
 
-#include <sha3.h>    //
-
 #include <alias.h>   // buff_size, bool, true, false
 #include <data.h>    // config, obj, layer
 #include <hash.h>    // get_hash
-#include <utility.h> // reverse_string
+#include <utility.h> // reverse_string, fill_key_buffer
 #include <vke.h>
 
 //------------------------------------------------------------------------------
@@ -24,7 +22,7 @@
  */
 bool initialize(config* cfg, obj* info, char* name, int indx,
     const char* access, bool force_file) {
-  info->name = name;
+  info->name    = name;
   info->is_file = true;
 
   int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
@@ -40,7 +38,8 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
       free(info->buff);
       return false;
     } else {
-      info->buff = name;
+      strcpy(info->buff, "");
+      strcpy(info->buff, name);
 
       if (strcmp(info->buff, "prompt") == 0) {
         char pass_prompt[80];
@@ -75,9 +74,10 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
         info->rev_hash = get_hash(info->rev_str);
 
         strcat(info->hash, info->rev_hash);
+        strcpy(info->buff, "");
+        strcpy(info->buff, info->hash);
 
-        info->buff = info->hash;
-        info->size = strlen(info->hash);
+        info->size = strlen(info->buff);
       }
     }
   } else {
@@ -108,36 +108,39 @@ bool check(config* cfg, obj* src, obj* key) {
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
 
-  while (src->indx < src->size) {
-    if ((src_read = fread(src->buff, 1, buff_size, src->data)) < 1) {
-      printf("Unable to read from %s\n", src->name);
-      return false;
-    }
-    if (key->is_file) {
-      if ((key_read = fread(key->buff, 1, buff_size, key->data)) < buff_size) {
-        if (key_read < 1) {
-          printf("Unable to read from %s\n", key->name);
-          return false;
-        }
-        fseek(key->data, 0, SEEK_SET);
-        key->indx = 0;
+  if (fill_key_buffer(key)) {
+    while (src->indx < src->size) {
+      if ((src_read = fread(src->buff, 1, buff_size, src->data)) < 1) {
+        printf("Unable to read from %s\n", src->name);
+        return false;
       }
-    } else {
-      key_read = key->size;
-    }
+      if (key->is_file) {
+        if ((key_read = fread(key->buff, 1, buff_size, key->data)) < buff_size) {
+          if (key_read < 1) {
+            printf("Unable to read from %s\n", key->name);
+            return false;
+          }
+          fseek(key->data, 0, SEEK_SET);
+          key->indx = 0;
+        }
+      } else {
+        key_read = key->size;
+      }
 
-    indx = 0;
-    while ((indx < src_read) && (indx < key_read)) {
-      src->buff[indx] = src->buff[indx] ^ key->buff[indx];
-      indx++;
-      src->indx++;
-      key->indx++;
-    }
+      indx = 0;
+      while ((indx < src_read) && (indx < key_read)) {
+        src->buff[indx] = src->buff[indx] ^ key->buff[indx];
+        indx++;
+        src->indx++;
+        key->indx++;
+      }
 
-    fseek(src->data, (-1 * src_read), SEEK_CUR);
-    fseek(src->data, indx, SEEK_CUR);
+      fseek(src->data, (-1 * src_read), SEEK_CUR);
+      fseek(src->data, indx, SEEK_CUR);
+    }
+    return true;
   }
-  return true;
+  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -158,6 +161,11 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
 
+  if (key->is_file) {
+    fseek(key->data, 0, SEEK_SET);
+    key->indx = 0;
+  }
+
   while (src->indx < src->size) {
     if ((src_read = fread(src->buff, 1, buff_size, src->data)) < 1) {
       printf("Unable to read from %s\n", src->name);
@@ -185,11 +193,6 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
     }
 
     fseek(src->data, (-1 * src_read), SEEK_CUR);
-
-    if (cfg->dry_run) {
-      // Simulate write
-      fseek(src->data, indx, SEEK_CUR);
-    }
 
     if (fwrite(src->buff, 1, indx, output_stream) < indx) {
       printf("Unable to write %s\n", src->name);
@@ -223,7 +226,6 @@ bool finalize(config* cfg, obj* src) {
     }
   } while ((temp = temp->next) != NULL);
 
-  //free(info);
   return ((errors == 0) ? true : false);
 }
 

@@ -57,9 +57,9 @@ bool free_layers(config* cfg) {
     while (temp->next != NULL) {
       layer* orig = temp;
       temp = temp->next;
-      //free(orig);
+      free(orig);
     }
-    //free(temp);
+    free(temp);
   }
   return true;
 }
