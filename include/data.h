@@ -22,6 +22,10 @@ typedef struct obj {
   unsigned int size;
   unsigned int indx;
   char* buff;
+  char* hash;
+  char* rev_str;
+  char* rev_hash;
+  char* final_hash;
 } obj;
 
 /**

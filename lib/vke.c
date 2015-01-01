@@ -12,6 +12,8 @@
 
 #include <alias.h>   // buff_size, bool, true, false
 #include <data.h>    // config, obj, layer
+#include <hash.h>    // get_hash
+#include <utility.h> // reverse_string
 #include <vke.h>
 
 //------------------------------------------------------------------------------
@@ -63,6 +65,20 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
       info->size = strlen(info->buff);
       info->indx = 0;
       info->is_file = false;
+
+      if (info->size < 200) {
+        info->hash    = get_hash(info->buff);
+        info->rev_str = (char*)malloc(strlen(info->buff) * sizeof(char));
+        strcpy(info->rev_str, info->buff);
+
+        info->rev_str  = reverse_string(info->rev_str);
+        info->rev_hash = get_hash(info->rev_str);
+
+        strcat(info->hash, info->rev_hash);
+
+        info->buff = info->hash;
+        info->size = strlen(info->hash);
+      }
     }
   } else {
     fseek(info->data, 0, SEEK_END);
@@ -87,7 +103,7 @@ bool check(config* cfg, obj* src, obj* key) {
   int indx;
 
   int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Verifying success of key %s (%dsec & %dms)\n", key->name, msec / 1000, msec % 1000);
+  printf("Verifying success of key %s [ %i ] (%dsec & %dms)\n", key->name, key->size, msec / 1000, msec % 1000);
 
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
