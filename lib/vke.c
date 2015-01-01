@@ -1,228 +1,21 @@
-/**
- ******************************************************************************
- ***                                                                        ***
- *                  VKE   -   Variable Key Encryption                         *
- ***                                                                        ***
- ******************************************************************************
- */
-//-----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 // Dependencies
-#include <stdio.h>  // FILE, stdout, sprintf, printf, fopen
-#include <stdlib.h> // calloc, malloc, free
-#include <string.h> // strlen, strcpy
-#include <unistd.h> // getpass
-#include <time.h>   // CLOCKS_PER_SEC, clock_t, clock
 
-//-----------------------------------------------------------------------------
-// Aliases
+#include <stdio.h>   // FILE, stderr, sprintf, printf, fopen
+#include <stdlib.h>  // calloc, free
+#include <string.h>  // strlen, strcpy
+#include <unistd.h>  // getpass
+#include <time.h>    // CLOCKS_PER_SEC, clock_t, clock
 
-#define buff_size 102400
-#define true 1
-#define false 0
+#include <sha3.h>    //
 
-typedef unsigned int bool;
+#include <alias.h>   // buff_size, bool, true, false
+#include <data.h>    // config, obj, layer
+#include <vke.h>
 
-//-----------------------------------------------------------------------------
-// Data structures
-
-/**
- * Data object (source and key files/text)
- */
-typedef struct obj {
-  char* name;
-  bool is_file;
-  FILE* data;
-  unsigned int size;
-  unsigned int indx;
-  char* buff;
-} obj;
-
-/**
- * Linked encryption layer (processed argument)
- */
-typedef struct layer {
-  char* name;
-  obj* key;
-  struct layer* next;
-} layer;
-
-/**
- * Application configuration settings
- */
-typedef struct config {
-  bool show_help;
-  bool dry_run;
-  unsigned int src_indx;
-  unsigned int key_indx;
-  unsigned int key_length;
-  struct layer* keys;
-  clock_t start;
-} config;
-
-//-----------------------------------------------------------------------------
-// Function prototypes
-
-void process_args(config* cfg, int argc, char* argv[]);
-
-bool initialize(config* cfg, obj* info, char* name, int indx,
-    const char* access, bool force_file);
-bool check(config* cfg, obj* src, obj* key);
-bool combine(config* cfg, obj* src, obj* key, FILE* output_stream);
-bool finalize(config* cfg, obj* src);
-bool finalize_key(config* cfg, obj* key);
-
-bool add_layer(config* cfg, char* name);
-bool free_layers(config* cfg);
-
-//-----------------------------------------------------------------------------
-// Execution gateway
-
-int main(int argc, char* argv[]) {
-  config cfg;
-  obj src;
-
-  char *help[] =
-      {
-          "                                                                                   ",
-          " Usage: vke  [-hd]  <source.file>  <key.file | key text | 'prompt'> ...            ",
-          "                                                                                   ",
-          "          -h | --help     Display this help information                            ",
-          "          -d | --dry_run  Test encryption / decryption without editing source file ",
-          "                                                                                   ",
-          "-----------------------------------------------------------------------------------",
-          "                                                                                   ",
-          "                        VKE - Variable Key Encryption                              ",
-          "                                                                                   ",
-          " Simple utility for encrypting source files based on combinations of file          ",
-          " based, parameter, and prompted passphrases.                                       ",
-          "                                                                                   ",
-          " Typing the word <prompt> will cause the program to prompt you for a               ",
-          " passphrase before encryption and decryption can begin.  Multiple prompted         ",
-          " passphrases may be used by specifying <prompt> multiple times.                    ",
-          "                                                                                   ",
-          " The same keys must be used to encrypt and decrypt files but the ordering          ",
-          " of the keys has no effect on the result.                                          ",
-          "                                                                                   ",
-          " This utility performs destructive operations on the source file and may in        ",
-          " extreme cirumstances cause data loss.  Always have backups handy.                 ",
-          "                                                                                   ",
-          "     Author: Adrian Webb (adrian.webb@coraltech.net)                               ",
-          "                                                                                   " };
-
-  process_args(&cfg, argc, argv);
-
-  if (cfg.key_length
-      && (!initialize(&cfg, &src, argv[cfg.src_indx], 0, "rb+", true))) {
-    cfg.show_help = true;
-  }
-  if (cfg.show_help) {
-    size_t i;
-    for (i = 0; i < sizeof(help) / sizeof(*help); i++) {
-      printf("%s\n", help[i]);
-    }
-    exit(1);
-  }
-
-  FILE* output_stream = ((cfg.dry_run) ? stderr : src.data);
-  int key_indx = cfg.key_indx;
-  int errors = 0;
-
-  if (cfg.keys != NULL) {
-    // First pass - Verify to minimize the chances of screwing up our file.
-    layer* temp = cfg.keys;
-    do {
-      temp->key = (struct obj*) malloc(sizeof(struct obj));
-
-      if (temp->key == NULL) {
-        printf("Cannot create memory for key %s", temp->name);
-        errors++;
-      } else if (initialize(&cfg, temp->key, temp->name, (key_indx - 1), "rb",
-          false)) {
-        if (!check(&cfg, &src, temp->key)) {
-          errors++;
-        }
-      } else {
-        errors++;
-      }
-      key_indx++;
-    } while ((temp = temp->next) != NULL);
-
-    // Second pass - Combine source and keys to toggle encryption / decryption.
-    if (errors == 0) {
-      temp = cfg.keys;
-      do {
-        if (!combine(&cfg, &src, temp->key, output_stream)) {
-          errors++;
-        }
-      } while ((temp = temp->next) != NULL);
-    }
-  }
-
-  if (!finalize(&cfg, &src)) {
-    errors++;
-  }
-  if (!free_layers(&cfg)) {
-    errors++;
-  }
-
-  if (errors > 0) {
-    exit((errors + 1));
-  }
-
-  int msec = ((clock_t)(clock() - cfg.start) * 1000 / CLOCKS_PER_SEC);
-  printf("Done in %dsec & %dms\n\n", msec / 1000, msec % 1000);
-
-  exit(EXIT_SUCCESS);
-}
-
-//-----------------------------------------------------------------------------
-// Argument processing
-
-/**
- * Process CLI arguments
- */
-void process_args(config* cfg, int argc, char* argv[]) {
-  cfg->show_help  = false;
-  cfg->dry_run    = false;
-  cfg->src_indx   = 1;
-  cfg->key_indx   = 2;
-  cfg->key_length = 0;
-  cfg->keys       = NULL;
-  cfg->start      = clock();
-
-  int arg_indx   = 1;
-  int arg_layers = 0;
-
-  while (arg_indx < argc) {
-    char* arg = argv[arg_indx];
-
-    if ((strcmp(arg, "-hd") == 0) || (strcmp(arg, "-dh") == 0)) {
-      cfg->show_help = true;
-    } else if ((strcmp(arg, "-h") == 0) || (strcmp(arg, "--help") == 0)) {
-      cfg->show_help = true;
-    } else if ((strcmp(arg, "-d") == 0) || (strcmp(arg, "--dry_run") == 0)) {
-      cfg->dry_run = true;
-    } else {
-      add_layer(cfg, arg);
-      arg_layers++;
-    }
-    arg_indx++;
-  }
-
-  if (argc == 1) {
-    cfg->show_help = true;
-  }
-  if (arg_layers) {
-    cfg->key_length  = arg_layers - 1;
-
-    layer* src_layer = cfg->keys;
-    cfg->keys = cfg->keys->next;
-    free(src_layer);
-  }
-}
-
-//-----------------------------------------------------------------------------
-// Encryption / Decryption processing
+//------------------------------------------------------------------------------
+// Initialization
 
 /**
  * Initialize a source file and encryption keys
@@ -281,6 +74,9 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
   return true;
 }
 
+//------------------------------------------------------------------------------
+// Checks and verification
+
 /**
  * Run sanity checks on the source file and encryption keys
  */
@@ -327,6 +123,9 @@ bool check(config* cfg, obj* src, obj* key) {
   }
   return true;
 }
+
+//------------------------------------------------------------------------------
+// Encryption / Decryption
 
 /**
  * Combine the source file with an encryption key
@@ -385,6 +184,9 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
   return true;
 }
 
+//------------------------------------------------------------------------------
+// Cleanup
+
 /**
  * Finalize source or key objects and cleanup
  */
@@ -419,60 +221,6 @@ bool finalize_key(config* cfg, obj* key) {
 
   if (key->is_file) {
     fclose(key->data);
-  }
-  return true;
-}
-
-//-----------------------------------------------------------------------------
-// Layer utilities
-
-/**
- * Add a new encryption/decryption layer to the configuration arguments
- */
-bool add_layer(config* cfg, char* name) {
-  layer* operation = malloc(sizeof(layer));
-
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Adding new layer %s (%dsec & %dms)\n", name, msec / 1000, msec % 1000);
-
-  if (operation == NULL) {
-    printf("Cannot allocate memory for layer %s\n", name);
-    return false;
-  }
-
-  operation->name = name;
-  operation->key = NULL;
-  operation->next = NULL;
-
-  if (cfg->keys == NULL) {
-    cfg->keys = operation;
-  } else {
-    // Add one operation onto the end
-    layer* temp = cfg->keys;
-    while (temp->next != NULL) {
-      temp = temp->next;
-    }
-    temp->next = operation;
-  }
-  return true;
-}
-
-/**
- * Free all created encyption/decryption layers from memory
- */
-bool free_layers(config* cfg) {
-
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Cleaning up all layers (%dsec & %dms)\n", msec / 1000, msec % 1000);
-
-  if (cfg->keys != NULL) {
-    layer* temp = cfg->keys;
-    while (temp->next != NULL) {
-      layer* orig = temp;
-      temp = temp->next;
-      //free(orig);
-    }
-    //free(temp);
   }
   return true;
 }
