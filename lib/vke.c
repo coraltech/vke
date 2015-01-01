@@ -11,6 +11,7 @@
 #include <stdlib.h> // calloc, malloc, free
 #include <string.h> // strlen, strcpy
 #include <unistd.h> // getpass
+#include <time.h>   // CLOCKS_PER_SEC, clock_t, clock
 
 //-----------------------------------------------------------------------------
 // Aliases
@@ -55,6 +56,7 @@ typedef struct config {
   unsigned int key_indx;
   unsigned int key_length;
   struct layer* keys;
+  clock_t start;
 } config;
 
 //-----------------------------------------------------------------------------
@@ -184,6 +186,7 @@ void process_args(config* cfg, int argc, char* argv[]) {
   cfg->key_indx   = 2;
   cfg->key_length = 0;
   cfg->keys       = NULL;
+  cfg->start      = clock();
 
   int arg_indx   = 1;
   int arg_layers = 0;
@@ -227,7 +230,8 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
   info->name = name;
   info->is_file = true;
 
-  printf("Initializing: %s [ %i ]\n", name, indx);
+  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
+  printf("Initializing: %s [ %i ] (%dsec/%dms)\n", name, indx, msec / 1000, msec % 1000);
 
   if (!(info->buff = (char*) calloc(buff_size, 1))) {
     printf("Unable to buffer %s\n", info->name);
@@ -284,7 +288,8 @@ bool check(config* cfg, obj* src, obj* key) {
 
   int indx;
 
-  printf("Verifying success of key %s\n", key->name);
+  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
+  printf("Verifying success of key %s (%dsec/%dms)\n", key->name, msec / 1000, msec % 1000);
 
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
@@ -330,7 +335,8 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
 
   int indx;
 
-  printf("Combining source %s with key %s\n", src->name, key->name);
+  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
+  printf("Combining source %s with key %s (%dsec/%dms)\n", src->name, key->name, msec / 1000, msec % 1000);
 
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
@@ -381,9 +387,10 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
  * Finalize source or key objects and cleanup
  */
 bool finalize(config* cfg, obj* src) {
-  printf("Finalizing session for source %s\n", src->name);
-
   int errors = 0;
+
+  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
+  printf("Finalizing session for source %s (%dsec/%dms)\n", src->name, msec / 1000, msec % 1000);
 
   if (src->is_file) {
     fclose(src->data);
@@ -404,10 +411,12 @@ bool finalize(config* cfg, obj* src) {
  * Finalize key object and cleanup
  */
 bool finalize_key(config* cfg, obj* key) {
-  printf("Finalizing session for key %s\n", key->name);
+
+  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
+  printf("Finalizing session for key %s (%dsec/%dms)\n", key->name, msec / 1000, msec % 1000);
 
   if (key->is_file) {
-    //fclose(key->data);
+    fclose(key->data);
   }
   return true;
 }
@@ -419,9 +428,10 @@ bool finalize_key(config* cfg, obj* key) {
  * Add a new encryption/decryption layer to the configuration arguments
  */
 bool add_layer(config* cfg, char* name) {
-  printf("Adding new layer %s\n", name);
-
   layer* operation = malloc(sizeof(layer));
+
+  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
+  printf("Adding new layer %s (%dsec/%dms)\n", name, msec / 1000, msec % 1000);
 
   if (operation == NULL) {
     printf("Cannot allocate memory for layer %s\n", name);
@@ -449,7 +459,9 @@ bool add_layer(config* cfg, char* name) {
  * Free all created encyption/decryption layers from memory
  */
 bool free_layers(config* cfg) {
-  printf("Cleaning up all layers\n");
+
+  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
+  printf("Cleaning up all layers (%dsec/%dms)\n", msec / 1000, msec % 1000);
 
   if (cfg->keys != NULL) {
     layer* temp = cfg->keys;
