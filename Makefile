@@ -17,6 +17,9 @@ BIN_PATH=$(PREFIX)/bin
 
 all: $(EXECUTABLE)
 
+debug: COMPILER_GLOBAL_FLAGS += -g3 -pg
+debug: $(EXECUTABLE)
+
 clean:
 	rm -f $(BUILD_PATH)/$(EXECUTABLE) $(OBJECT_PATH)/*.o
 	 
@@ -25,7 +28,7 @@ install: $(EXECUTABLE)
 
 #---	
 
-.PHONY: all clean install
+.PHONY: all debug clean install
 
 #-------------------------------------------------------------------------------
 
