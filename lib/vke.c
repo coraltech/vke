@@ -67,15 +67,18 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
 
       if (info->size < 200) {
         info->hash    = get_hash(info->buff);
-        info->rev_str = (char*)malloc(strlen(info->buff) * sizeof(char));
+        info->rev_str = (char*)malloc((strlen(info->buff) + 1) * sizeof(char));
         strcpy(info->rev_str, info->buff);
 
         info->rev_str  = reverse_string(info->rev_str);
         info->rev_hash = get_hash(info->rev_str);
 
-        strcat(info->hash, info->rev_hash);
-        strcpy(info->buff, "");
-        strcpy(info->buff, info->hash);
+        info->final_hash = (char*)malloc((strlen(info->hash) + strlen(info->rev_hash) + 1) * sizeof(char));
+        info->final_hash[0] = '\0';
+
+        strcat(info->final_hash, info->hash);
+        strcat(info->final_hash, info->rev_hash);
+        strcpy(info->buff, info->final_hash);
 
         info->size = strlen(info->buff);
       }

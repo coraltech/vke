@@ -40,7 +40,7 @@ bool fill_key_buffer(obj* key) {
 
     int select_indx   = 0;
 
-    while (key_buff_indx < buff_size) {
+    while (key_buff_indx < (buff_size - 1)) {
       key->buff[key_buff_indx] = key->buff[select_indx];
       key->buff[(key_buff_indx + 1)] = '\0';
       key_buff_indx++;
