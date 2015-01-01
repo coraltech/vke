@@ -165,11 +165,13 @@ int main(int argc, char* argv[]) {
     errors++;
   }
 
-  printf("\n\n");
-
   if (errors > 0) {
     exit((errors + 1));
   }
+
+  int msec = ((clock_t)(clock() - cfg.start) * 1000 / CLOCKS_PER_SEC);
+  printf("Done in %dsec & %dms\n\n", msec / 1000, msec % 1000);
+
   exit(EXIT_SUCCESS);
 }
 
@@ -230,8 +232,8 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
   info->name = name;
   info->is_file = true;
 
-  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
-  printf("Initializing: %s [ %i ] (%dsec/%dms)\n", name, indx, msec / 1000, msec % 1000);
+  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+  printf("Initializing: %s [ %i ] (%dsec & %dms)\n", name, indx, msec / 1000, msec % 1000);
 
   if (!(info->buff = (char*) calloc(buff_size, 1))) {
     printf("Unable to buffer %s\n", info->name);
@@ -288,8 +290,8 @@ bool check(config* cfg, obj* src, obj* key) {
 
   int indx;
 
-  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
-  printf("Verifying success of key %s (%dsec/%dms)\n", key->name, msec / 1000, msec % 1000);
+  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+  printf("Verifying success of key %s (%dsec & %dms)\n", key->name, msec / 1000, msec % 1000);
 
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
@@ -335,8 +337,8 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
 
   int indx;
 
-  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
-  printf("Combining source %s with key %s (%dsec/%dms)\n", src->name, key->name, msec / 1000, msec % 1000);
+  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+  printf("Combining source %s with key %s (%dsec & %dms)\n", src->name, key->name, msec / 1000, msec % 1000);
 
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
@@ -389,8 +391,8 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
 bool finalize(config* cfg, obj* src) {
   int errors = 0;
 
-  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
-  printf("Finalizing session for source %s (%dsec/%dms)\n", src->name, msec / 1000, msec % 1000);
+  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+  printf("Finalizing session for source %s (%dsec & %dms)\n", src->name, msec / 1000, msec % 1000);
 
   if (src->is_file) {
     fclose(src->data);
@@ -412,8 +414,8 @@ bool finalize(config* cfg, obj* src) {
  */
 bool finalize_key(config* cfg, obj* key) {
 
-  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
-  printf("Finalizing session for key %s (%dsec/%dms)\n", key->name, msec / 1000, msec % 1000);
+  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+  printf("Finalizing session for key %s (%dsec & %dms)\n", key->name, msec / 1000, msec % 1000);
 
   if (key->is_file) {
     fclose(key->data);
@@ -430,8 +432,8 @@ bool finalize_key(config* cfg, obj* key) {
 bool add_layer(config* cfg, char* name) {
   layer* operation = malloc(sizeof(layer));
 
-  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
-  printf("Adding new layer %s (%dsec/%dms)\n", name, msec / 1000, msec % 1000);
+  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+  printf("Adding new layer %s (%dsec & %dms)\n", name, msec / 1000, msec % 1000);
 
   if (operation == NULL) {
     printf("Cannot allocate memory for layer %s\n", name);
@@ -460,8 +462,8 @@ bool add_layer(config* cfg, char* name) {
  */
 bool free_layers(config* cfg) {
 
-  int msec = ((int)(clock() - cfg->start) * 1000) / CLOCKS_PER_SEC;
-  printf("Cleaning up all layers (%dsec/%dms)\n", msec / 1000, msec % 1000);
+  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+  printf("Cleaning up all layers (%dsec & %dms)\n", msec / 1000, msec % 1000);
 
   if (cfg->keys != NULL) {
     layer* temp = cfg->keys;
