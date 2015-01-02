@@ -53,7 +53,8 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
         strcpy(confirm_input, getpass(confirm_prompt));
 
         if (strcmp(pass_input, confirm_input) == 0) {
-          info->buff = pass_input;
+          strcpy(info->buff, "");
+          strcpy(info->buff, pass_input);
         } else {
           printf("Passphrase and confirmation for key %i do not match\n\n",
               indx);
