@@ -289,25 +289,23 @@ bool finalize_key(config* cfg, obj* key) {
     printf("Finalizing session for key %s (%dsec & %dms)\n", key->name, msec / 1000, msec % 1000);
   }
 
-  if (key->initialized) {
-    if (key->buff != NULL) {
-      free(key->buff);
-    }
-    if (key->hash != NULL) {
-      free(key->hash);
-    }
-    if (key->rev_str != NULL) {
-      free(key->rev_str);
-    }
-    if (key->rev_hash != NULL) {
-      free(key->rev_hash);
-    }
-    if (key->final_hash != NULL) {
-      free(key->final_hash);
-    }
-    if (key->is_file) {
-      fclose(key->data);
-    }
+  if (key->buff != NULL) {
+    free(key->buff);
+  }
+  if (key->hash != NULL) {
+    free(key->hash);
+  }
+  if (key->rev_str != NULL) {
+    free(key->rev_str);
+  }
+  if (key->rev_hash != NULL) {
+    free(key->rev_hash);
+  }
+  if (key->final_hash != NULL) {
+    free(key->final_hash);
+  }
+  if (key->is_file) {
+    fclose(key->data);
   }
   free(key);
   return true;
