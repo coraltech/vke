@@ -47,29 +47,22 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
 
       if (strcmp(info->buff, "prompt") == 0) {
         char pass_prompt[80];
-        char pass_input[500];
-        char* pass_temp;
+        char confirm_prompt[80];
 
         sprintf(pass_prompt, "Enter passphrase for key %i: ", indx);
-        pass_temp = getpass(pass_prompt);
-        strcpy(pass_input, pass_temp);
-        free(pass_temp);
-
-        char confirm_prompt[80];
-        char confirm_input[500];
-        char* confirm_temp;
+        char* pass_input = getpass(pass_prompt);
 
         sprintf(confirm_prompt, "Confirm passphrase for key %i: ", indx);
-        confirm_temp = getpass(confirm_prompt);
-        strcpy(confirm_input, confirm_temp);
-        free(confirm_temp);
+        char* confirm_input = getpass(confirm_prompt);
 
         if (strcmp(pass_input, confirm_input) == 0) {
           strcpy(info->buff, "");
           strcpy(info->buff, pass_input);
+          free(pass_input);
         } else {
           printf("Passphrase and confirmation for key %i do not match\n\n",
               indx);
+          free(pass_input);
           return false;
         }
       }

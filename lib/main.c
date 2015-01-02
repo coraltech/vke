@@ -110,11 +110,18 @@ int main(int argc, char* argv[]) {
   }
 
   if (errors > 0) {
+    fclose(stdin);
+    fclose(stdout);
+    fclose(stderr);
     exit((errors + 1));
   }
 
   int msec = ((clock_t)(clock() - cfg.start) * 1000 / CLOCKS_PER_SEC);
   printf("Done in %dsec & %dms\n\n", msec / 1000, msec % 1000);
+
+  fclose(stdin);
+  fclose(stdout);
+  fclose(stderr);
 
   exit(EXIT_SUCCESS);
 }
