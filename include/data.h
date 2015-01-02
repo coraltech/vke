@@ -34,6 +34,7 @@ typedef struct obj {
  */
 typedef struct layer {
   char* name;
+  unsigned int indx;
   obj* key;
   struct layer* next;
 } layer;
@@ -47,7 +48,6 @@ typedef struct config {
   bool quiet;
   unsigned int hash_threshold;
   unsigned int src_indx;
-  unsigned int key_indx;
   unsigned int key_length;
   struct layer* keys;
   clock_t start;

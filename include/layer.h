@@ -8,6 +8,6 @@
 //------------------------------------------------------------------------------
 // Function prototypes
 
-bool add_layer(config* cfg, char* name);
+bool add_layer(config* cfg, char* name, unsigned int indx);
 bool free_layers(config* cfg);
 void free_layer(layer* layr);

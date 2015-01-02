@@ -17,7 +17,7 @@
 /**
  * Add a new encryption/decryption layer to the configuration arguments
  */
-bool add_layer(config* cfg, char* name) {
+bool add_layer(config* cfg, char* name, unsigned int indx) {
   layer* operation = malloc(sizeof(layer));
 
   if (!cfg->quiet) {
@@ -33,6 +33,7 @@ bool add_layer(config* cfg, char* name) {
   operation->name = (char*)malloc((strlen(name) + 1) * sizeof(char));
   strcpy(operation->name, name);
 
+  operation->indx = indx;
   operation->key  = NULL;
   operation->next = NULL;
 

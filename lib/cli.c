@@ -24,7 +24,6 @@ void process_args(config* cfg, int argc, char* argv[]) {
   cfg->quiet          = false;
   cfg->hash_threshold = 200;
   cfg->src_indx       = 1;
-  cfg->key_indx       = 2;
   cfg->key_length     = 0;
   cfg->keys           = NULL;
   cfg->start          = clock();
@@ -48,13 +47,12 @@ void process_args(config* cfg, int argc, char* argv[]) {
       cfg->show_help = true;
       break;
     } else {
-      add_layer(cfg, arg);
+      add_layer(cfg, arg, arg_layers);
       arg_layers++;
 
       if (!source_found) {
         source_found = true;
         cfg->src_indx = arg_indx;
-        cfg->key_indx = cfg->src_indx + 1;
       }
     }
     arg_indx++;

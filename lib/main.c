@@ -82,7 +82,6 @@ int main(int argc, char* argv[]) {
     } else {
       output_stream = ((cfg.dry_run) ? stderr : src.data);
     }
-    int key_indx = cfg.key_indx;
 
     if (cfg.keys != NULL) {
       // First pass - Verify to minimize the chances of screwing up our file.
@@ -93,7 +92,7 @@ int main(int argc, char* argv[]) {
         if (temp->key == NULL) {
           printf("Cannot create memory for key %s", temp->name);
           errors++;
-        } else if (initialize(&cfg, temp->key, temp->name, (key_indx - 1), "rb",
+        } else if (initialize(&cfg, temp->key, temp->name, temp->indx, "rb",
             false)) {
           if (!check(&cfg, &src, temp->key)) {
             errors++;
@@ -101,7 +100,6 @@ int main(int argc, char* argv[]) {
         } else {
           errors++;
         }
-        key_indx++;
       } while ((temp = temp->next) != NULL);
 
       // Second pass - Combine source and keys to toggle encryption / decryption.
