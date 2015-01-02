@@ -4,7 +4,7 @@
 //------------------------------------------------------------------------------
 // Aliases
 
-#define buff_size 2048
+#define buff_size 102400
 #define true 1
 #define false 0
 
