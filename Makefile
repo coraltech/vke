@@ -7,6 +7,7 @@ BUILD_PATH=build
 OBJECT_PATH=$(BUILD_PATH)
 SOURCE_PATH=lib
 INCLUDE_PATH=include
+PROFILE_PATH=profile
 
 EXECUTABLE=vke
 
@@ -30,7 +31,7 @@ memory: debug
 	valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes $(BUILD_PATH)/$(EXECUTABLE) --quiet samples/source.txt samples/key.txt "key string" prompt --dry_run
 
 profile: debug
-	valgrind --tool=callgrind --auto=yes --inclusive=yes --tree=both $(BUILD_PATH)/$(EXECUTABLE) --quiet samples/source.txt samples/key.txt "key string" prompt --dry_run
+	valgrind --tool=callgrind --callgrind-out-file=$(PROFILE_PATH)/callgrind.`date +%Y%m%d-%H%M%S`.out $(BUILD_PATH)/$(EXECUTABLE) --quiet samples/source.txt samples/key.txt "key string" prompt --dry_run
 
 #---	
 
