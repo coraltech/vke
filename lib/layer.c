@@ -4,6 +4,7 @@
 
 #include <stdio.h>   // printf
 #include <stdlib.h>  // malloc, free
+#include <string.h>  // strlen, strcpy
 #include <time.h>    // CLOCKS_PER_SEC, clock_t, clock
 
 #include <alias.h>   // bool, true, false
@@ -19,16 +20,20 @@
 bool add_layer(config* cfg, char* name) {
   layer* operation = malloc(sizeof(layer));
 
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Adding new layer %s (%dsec & %dms)\n", name, msec / 1000, msec % 1000);
+  if (!cfg->quiet) {
+    int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+    printf("Adding new layer %s (%dsec & %dms)\n", name, msec / 1000, msec % 1000);
+  }
 
   if (operation == NULL) {
     printf("Cannot allocate memory for layer %s\n", name);
     return false;
   }
 
-  operation->name = name;
-  operation->key = NULL;
+  operation->name = (char*)malloc((strlen(name) + 1) * sizeof(char));
+  strcpy(operation->name, name);
+
+  operation->key  = NULL;
   operation->next = NULL;
 
   if (cfg->keys == NULL) {
@@ -49,17 +54,30 @@ bool add_layer(config* cfg, char* name) {
  */
 bool free_layers(config* cfg) {
 
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Cleaning up all layers (%dsec & %dms)\n", msec / 1000, msec % 1000);
+  if (!cfg->quiet) {
+    int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+    printf("Cleaning up all layers (%dsec & %dms)\n", msec / 1000, msec % 1000);
+  }
 
   if (cfg->keys != NULL) {
-    layer* temp = cfg->keys;
-    while (temp->next != NULL) {
-      layer* orig = temp;
-      temp = temp->next;
-      free(orig);
+    layer* layr = cfg->keys;
+    while (layr != NULL) {
+      layer temp;
+      memcpy(&temp, layr, sizeof(layer));
+
+      free_layer(layr);
+      layr = temp.next;
     }
-    free(temp);
   }
   return true;
+}
+
+/**
+ * Free a registered layer
+ */
+void free_layer(layer* layr) {
+  if (layr != NULL) {
+    free(layr->name);
+    free(layr);
+  }
 }

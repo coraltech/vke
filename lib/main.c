@@ -22,16 +22,25 @@
 // Execution gateway
 
 int main(int argc, char* argv[]) {
+  int errors = 0;
+  int status = 0;
+
   config cfg;
   obj src;
+
+  src.data = NULL;
+  src.buff = NULL;
+
+  FILE* output_stream = NULL;
 
   char *help[] =
       {
           "                                                                                   ",
-          " Usage: vke  [-hd]  <source.file>  <key.file | key text | 'prompt'> ...            ",
+          " Usage: vke  <source.file>  <key.file | key text | 'prompt'> ...                   ",
           "                                                                                   ",
           "          -h | --help     Display this help information                            ",
           "          -d | --dry_run  Test encryption / decryption without editing source file ",
+          "          -q | --quiet    Suppress all output except errors and warnings           ",
           "                                                                                   ",
           "-----------------------------------------------------------------------------------",
           "                                                                                   ",
@@ -59,51 +68,56 @@ int main(int argc, char* argv[]) {
       && (!initialize(&cfg, &src, argv[cfg.src_indx], 0, "rb+", true))) {
     cfg.show_help = true;
   }
+
   if (cfg.show_help) {
     size_t i;
     for (i = 0; i < sizeof(help) / sizeof(*help); i++) {
       printf("%s\n", help[i]);
     }
-    exit(1);
-  }
+    errors++;
 
-  FILE* output_stream = ((cfg.dry_run) ? stderr : src.data);
-  int key_indx = cfg.key_indx;
-  int errors = 0;
-
-  if (cfg.keys != NULL) {
-    // First pass - Verify to minimize the chances of screwing up our file.
-    layer* temp = cfg.keys;
-    do {
-      temp->key = (struct obj*) malloc(sizeof(struct obj));
-
-      if (temp->key == NULL) {
-        printf("Cannot create memory for key %s", temp->name);
-        errors++;
-      } else if (initialize(&cfg, temp->key, temp->name, (key_indx - 1), "rb",
-          false)) {
-        if (!check(&cfg, &src, temp->key)) {
-          errors++;
-        }
-      } else {
-        errors++;
-      }
-      key_indx++;
-    } while ((temp = temp->next) != NULL);
-
-    // Second pass - Combine source and keys to toggle encryption / decryption.
-    if (errors == 0) {
-      temp = cfg.keys;
-      do {
-        if (!combine(&cfg, &src, temp->key, output_stream)) {
-          errors++;
-        }
-      } while ((temp = temp->next) != NULL);
+  } else {
+    if (cfg.dry_run && cfg.quiet) {
+      output_stream = fopen("/dev/null", "w");
+    } else {
+      output_stream = ((cfg.dry_run) ? stderr : src.data);
     }
-  }
+    int key_indx = cfg.key_indx;
 
-  if (cfg.dry_run) {
-    printf("\n\n");
+    if (cfg.keys != NULL) {
+      // First pass - Verify to minimize the chances of screwing up our file.
+      layer* temp = cfg.keys;
+      do {
+        temp->key = (struct obj*) malloc(sizeof(struct obj));
+
+        if (temp->key == NULL) {
+          printf("Cannot create memory for key %s", temp->name);
+          errors++;
+        } else if (initialize(&cfg, temp->key, temp->name, (key_indx - 1), "rb",
+            false)) {
+          if (!check(&cfg, &src, temp->key)) {
+            errors++;
+          }
+        } else {
+          errors++;
+        }
+        key_indx++;
+      } while ((temp = temp->next) != NULL);
+
+      // Second pass - Combine source and keys to toggle encryption / decryption.
+      if (errors == 0) {
+        temp = cfg.keys;
+        do {
+          if (!combine(&cfg, &src, temp->key, output_stream)) {
+            errors++;
+          }
+        } while ((temp = temp->next) != NULL);
+      }
+    }
+
+    if (cfg.dry_run && !cfg.quiet) {
+      printf("\n\n");
+    }
   }
 
   if (!finalize(&cfg, &src)) {
@@ -112,20 +126,21 @@ int main(int argc, char* argv[]) {
   if (!free_layers(&cfg)) {
     errors++;
   }
-
   if (errors > 0) {
-    fclose(stdin);
-    fclose(stdout);
-    fclose(stderr);
-    exit((errors + 1));
+    status = (errors + 1);
   }
 
-  int msec = ((clock_t)(clock() - cfg.start) * 1000 / CLOCKS_PER_SEC);
-  printf("Done in %dsec & %dms\n\n", msec / 1000, msec % 1000);
+  if (errors == 0 && !cfg.quiet) {
+    int msec = ((clock_t)(clock() - cfg.start) * 1000 / CLOCKS_PER_SEC);
+    printf("Done in %dsec & %dms\n\n", msec / 1000, msec % 1000);
+  }
 
+  if (cfg.dry_run && cfg.quiet && output_stream != NULL) {
+    fclose(output_stream);
+  }
   fclose(stdin);
   fclose(stdout);
   fclose(stderr);
 
-  exit(EXIT_SUCCESS);
+  return status;
 }

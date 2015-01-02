@@ -17,6 +17,7 @@
  */
 typedef struct obj {
   char* name;
+  bool initialized;
   bool is_file;
   FILE* data;
   unsigned int size;
@@ -43,6 +44,7 @@ typedef struct layer {
 typedef struct config {
   bool show_help;
   bool dry_run;
+  bool quiet;
   unsigned int hash_threshold;
   unsigned int src_indx;
   unsigned int key_indx;

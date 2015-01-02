@@ -22,15 +22,18 @@
  */
 bool initialize(config* cfg, obj* info, char* name, int indx,
     const char* access, bool force_file) {
-  info->name       = name;
-  info->is_file    = true;
-  info->hash       = NULL;
-  info->rev_str    = NULL;
-  info->rev_hash   = NULL;
-  info->final_hash = NULL;
+  info->name        = name;
+  info->initialized = false;
+  info->is_file     = true;
+  info->hash        = NULL;
+  info->rev_str     = NULL;
+  info->rev_hash    = NULL;
+  info->final_hash  = NULL;
 
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Initializing: %s [ %i ] (%dsec & %dms)\n", name, indx, msec / 1000, msec % 1000);
+  if (!cfg->quiet) {
+    int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+    printf("Initializing: %s [ %i ] (%dsec & %dms)\n", name, indx, msec / 1000, msec % 1000);
+  }
 
   if (!(info->buff = (char*) calloc(buff_size, 1))) {
     printf("Unable to buffer %s\n", info->name);
@@ -77,7 +80,7 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
 
       info->size = strlen(info->buff);
 
-      if (info->size < 200) {
+      if (info->size < cfg->hash_threshold) {
         info->hash    = get_hash(info->buff);
         info->rev_str = (char*)malloc((strlen(info->buff) + 1) * sizeof(char));
         strcpy(info->rev_str, info->buff);
@@ -102,6 +105,7 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
     fseek(info->data, 0, SEEK_SET);
     info->indx = 0;
   }
+  info->initialized = true;
   return true;
 }
 
@@ -117,8 +121,10 @@ bool check(config* cfg, obj* src, obj* key) {
 
   int indx;
 
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Verifying success of key %s [ %i ] (%dsec & %dms)\n", key->name, key->size, msec / 1000, msec % 1000);
+  if (!cfg->quiet) {
+    int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+    printf("Verifying success of key %s [ %i ] (%dsec & %dms)\n", key->name, key->size, msec / 1000, msec % 1000);
+  }
 
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
@@ -170,16 +176,19 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
 
   int indx;
 
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+  if (!cfg->quiet) {
+    int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
 
-  if (cfg->dry_run) {
-    printf("\n\n");
-  }
-  printf("Combining source %s with key %s (%dsec & %dms)\n", src->name, key->name, msec / 1000, msec % 1000);
+    if (cfg->dry_run) {
+      printf("\n\n");
+    }
+    printf("Combining source %s with key %s (%dsec & %dms)\n", src->name, key->name, msec / 1000, msec % 1000);
 
-  if (cfg->dry_run) {
-    printf("\n\n");
+    if (cfg->dry_run) {
+      printf("\n\n");
+    }
   }
+
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
 
@@ -240,7 +249,7 @@ bool finalize(config* cfg, obj* src) {
 
   layer* temp = cfg->keys;
   do {
-    if (!finalize_key(cfg, temp->key)) {
+    if (temp->key != NULL && !finalize_key(cfg, temp->key)) {
       errors++;
     }
   } while ((temp = temp->next) != NULL);
@@ -253,13 +262,19 @@ bool finalize(config* cfg, obj* src) {
  */
 bool finalize_source(config* cfg, obj* src) {
 
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Finalizing session for source %s (%dsec & %dms)\n", src->name, msec / 1000, msec % 1000);
+  if (!cfg->quiet) {
+    int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+    printf("Finalizing session for source %s (%dsec & %dms)\n", src->name, msec / 1000, msec % 1000);
+  }
 
-  free(src->buff);
+  if (src->initialized) {
+    if (src->buff != NULL) {
+      free(src->buff);
+    }
 
-  if (src->is_file) {
-    fclose(src->data);
+    if (src->is_file && src->data != NULL) {
+      fclose(src->data);
+    }
   }
   return true;
 }
@@ -269,26 +284,30 @@ bool finalize_source(config* cfg, obj* src) {
  */
 bool finalize_key(config* cfg, obj* key) {
 
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Finalizing session for key %s (%dsec & %dms)\n", key->name, msec / 1000, msec % 1000);
+  if (!cfg->quiet) {
+    int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+    printf("Finalizing session for key %s (%dsec & %dms)\n", key->name, msec / 1000, msec % 1000);
+  }
 
-  if (key->buff != NULL) {
-    free(key->buff);
-  }
-  if (key->hash != NULL) {
-    free(key->hash);
-  }
-  if (key->rev_str != NULL) {
-    free(key->rev_str);
-  }
-  if (key->rev_hash != NULL) {
-    free(key->rev_hash);
-  }
-  if (key->final_hash != NULL) {
-    free(key->final_hash);
-  }
-  if (key->is_file) {
-    fclose(key->data);
+  if (key->initialized) {
+    if (key->buff != NULL) {
+      free(key->buff);
+    }
+    if (key->hash != NULL) {
+      free(key->hash);
+    }
+    if (key->rev_str != NULL) {
+      free(key->rev_str);
+    }
+    if (key->rev_hash != NULL) {
+      free(key->rev_hash);
+    }
+    if (key->final_hash != NULL) {
+      free(key->final_hash);
+    }
+    if (key->is_file) {
+      fclose(key->data);
+    }
   }
   free(key);
   return true;
