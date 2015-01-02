@@ -102,6 +102,10 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  if (cfg.dry_run) {
+    printf("\n\n");
+  }
+
   if (!finalize(&cfg, &src)) {
     errors++;
   }

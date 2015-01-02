@@ -42,6 +42,9 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
       free(info->buff);
       return false;
     } else {
+      info->indx = 0;
+      info->is_file = false;
+
       strcpy(info->buff, "");
       strcpy(info->buff, name);
 
@@ -73,8 +76,6 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
       }
 
       info->size = strlen(info->buff);
-      info->indx = 0;
-      info->is_file = false;
 
       if (info->size < 200) {
         info->hash    = get_hash(info->buff);
@@ -170,8 +171,15 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
   int indx;
 
   int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+
+  if (cfg->dry_run) {
+    printf("\n\n");
+  }
   printf("Combining source %s with key %s (%dsec & %dms)\n", src->name, key->name, msec / 1000, msec % 1000);
 
+  if (cfg->dry_run) {
+    printf("\n\n");
+  }
   fseek(src->data, 0, SEEK_SET);
   src->indx = 0;
 
@@ -271,15 +279,14 @@ bool finalize_key(config* cfg, obj* key) {
     free(key->hash);
   }
   if (key->rev_str != NULL) {
-      free(key->rev_str);
-    }
+    free(key->rev_str);
+  }
   if (key->rev_hash != NULL) {
     free(key->rev_hash);
   }
   if (key->final_hash != NULL) {
     free(key->final_hash);
   }
-
   if (key->is_file) {
     fclose(key->data);
   }
