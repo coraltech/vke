@@ -22,8 +22,12 @@
  */
 bool initialize(config* cfg, obj* info, char* name, int indx,
     const char* access, bool force_file) {
-  info->name    = name;
-  info->is_file = true;
+  info->name       = name;
+  info->is_file    = true;
+  info->hash       = NULL;
+  info->rev_str    = NULL;
+  info->rev_hash   = NULL;
+  info->final_hash = NULL;
 
   int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
   printf("Initializing: %s [ %i ] (%dsec & %dms)\n", name, indx, msec / 1000, msec % 1000);
@@ -44,13 +48,21 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
       if (strcmp(info->buff, "prompt") == 0) {
         char pass_prompt[80];
         char pass_input[500];
+        char* pass_temp;
+
         sprintf(pass_prompt, "Enter passphrase for key %i: ", indx);
-        strcpy(pass_input, getpass(pass_prompt));
+        pass_temp = getpass(pass_prompt);
+        strcpy(pass_input, pass_temp);
+        free(pass_temp);
 
         char confirm_prompt[80];
         char confirm_input[500];
+        char* confirm_temp;
+
         sprintf(confirm_prompt, "Confirm passphrase for key %i: ", indx);
-        strcpy(confirm_input, getpass(confirm_prompt));
+        confirm_temp = getpass(confirm_prompt);
+        strcpy(confirm_input, confirm_temp);
+        free(confirm_temp);
 
         if (strcmp(pass_input, confirm_input) == 0) {
           strcpy(info->buff, "");

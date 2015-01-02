@@ -22,7 +22,6 @@ typedef struct obj {
   unsigned int size;
   unsigned int indx;
   char* buff;
-  unsigned int threshold;
   char* hash;
   char* rev_str;
   char* rev_hash;
@@ -44,6 +43,7 @@ typedef struct layer {
 typedef struct config {
   bool show_help;
   bool dry_run;
+  unsigned int hash_threshold;
   unsigned int src_indx;
   unsigned int key_indx;
   unsigned int key_length;
