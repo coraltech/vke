@@ -31,9 +31,21 @@ void process_args(config* cfg, int argc, char* argv[]) {
   int arg_indx     = 1;
   int arg_layers   = 0;
   int source_found = false;
+  char* arg;
 
   while (arg_indx < argc) {
-    char* arg = argv[arg_indx];
+    arg = argv[arg_indx];
+
+    if ((strcmp(arg, "-q") == 0) || (strcmp(arg, "--quiet") == 0)) {
+      cfg->quiet = true;
+      break;
+    }
+    arg_indx++;
+  }
+
+  arg_indx = 1;
+  while (arg_indx < argc) {
+    arg = argv[arg_indx];
 
     if ((strcmp(arg, "-h") == 0) || (strcmp(arg, "--help") == 0)) {
       cfg->show_help = true;
@@ -41,7 +53,6 @@ void process_args(config* cfg, int argc, char* argv[]) {
     } else if ((strcmp(arg, "-d") == 0) || (strcmp(arg, "--dry_run") == 0)) {
       cfg->dry_run = true;
     } else if ((strcmp(arg, "-q") == 0) || (strcmp(arg, "--quiet") == 0)) {
-      cfg->quiet = true;
     } else if (arg[0] == '-') {
       printf("Unrecognized option: %s\n", arg);
       cfg->show_help = true;
