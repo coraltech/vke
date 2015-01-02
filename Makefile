@@ -17,7 +17,7 @@ BIN_PATH=$(PREFIX)/bin
 
 all: $(EXECUTABLE)
 
-debug: COMPILER_GLOBAL_FLAGS += -g3 -pg
+debug: COMPILER_GLOBAL_FLAGS += -g -Wall -Wshadow -Werror
 debug: $(EXECUTABLE)
 
 clean:
@@ -27,11 +27,14 @@ install: $(EXECUTABLE)
 	install -D $(BUILD_PATH)/$(EXECUTABLE) $(BIN_PATH)/$(EXECUTABLE)
 	
 memory: debug
-	valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes $(BUILD_PATH)/$(EXECUTABLE) samples/source.txt samples/key.txt "key string" prompt --dry_run
+	valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes $(BUILD_PATH)/$(EXECUTABLE) --quiet samples/source.txt samples/key.txt "key string" prompt --dry_run
+
+profile: debug
+	valgrind --tool=callgrind --auto=yes --inclusive=yes --tree=both $(BUILD_PATH)/$(EXECUTABLE) --quiet samples/source.txt samples/key.txt "key string" prompt --dry_run
 
 #---	
 
-.PHONY: all debug clean install memory
+.PHONY: all debug clean install memory profile
 
 #-------------------------------------------------------------------------------
 
