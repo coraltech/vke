@@ -25,10 +25,13 @@ clean:
 	 
 install: $(EXECUTABLE)
 	install -D $(BUILD_PATH)/$(EXECUTABLE) $(BIN_PATH)/$(EXECUTABLE)
+	
+memory: debug
+	valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes $(BUILD_PATH)/$(EXECUTABLE) samples/source.txt samples/key.txt "key string" prompt --dry_run
 
 #---	
 
-.PHONY: all debug clean install
+.PHONY: all debug clean install memory
 
 #-------------------------------------------------------------------------------
 
