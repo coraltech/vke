@@ -215,11 +215,8 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
 bool finalize(config* cfg, obj* src) {
   int errors = 0;
 
-  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-  printf("Finalizing session for source %s (%dsec & %dms)\n", src->name, msec / 1000, msec % 1000);
-
-  if (src->is_file) {
-    fclose(src->data);
+  if (!finalize_source(cfg, src)) {
+    errors++;
   }
 
   layer* temp = cfg->keys;
@@ -233,6 +230,22 @@ bool finalize(config* cfg, obj* src) {
 }
 
 /**
+ * Finalize source object and cleanup
+ */
+bool finalize_source(config* cfg, obj* src) {
+
+  int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
+  printf("Finalizing session for source %s (%dsec & %dms)\n", src->name, msec / 1000, msec % 1000);
+
+  free(src->buff);
+
+  if (src->is_file) {
+    fclose(src->data);
+  }
+  return true;
+}
+
+/**
  * Finalize key object and cleanup
  */
 bool finalize_key(config* cfg, obj* key) {
@@ -240,8 +253,25 @@ bool finalize_key(config* cfg, obj* key) {
   int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
   printf("Finalizing session for key %s (%dsec & %dms)\n", key->name, msec / 1000, msec % 1000);
 
+  if (key->buff != NULL) {
+    free(key->buff);
+  }
+  if (key->hash != NULL) {
+    free(key->hash);
+  }
+  if (key->rev_str != NULL) {
+      free(key->rev_str);
+    }
+  if (key->rev_hash != NULL) {
+    free(key->rev_hash);
+  }
+  if (key->final_hash != NULL) {
+    free(key->final_hash);
+  }
+
   if (key->is_file) {
     fclose(key->data);
   }
+  free(key);
   return true;
 }

@@ -17,4 +17,5 @@ bool check(config* cfg, obj* src, obj* key);
 bool combine(config* cfg, obj* src, obj* key, FILE* output_stream);
 
 bool finalize(config* cfg, obj* src);
+bool finalize_source(config* cfg, obj* src);
 bool finalize_key(config* cfg, obj* key);
