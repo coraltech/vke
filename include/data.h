@@ -44,6 +44,7 @@ typedef struct layer {
  */
 typedef struct config {
   bool show_help;
+  bool show_version;
   bool dry_run;
   bool quiet;
   unsigned int hash_threshold;

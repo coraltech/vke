@@ -20,6 +20,7 @@
  */
 void process_args(config* cfg, int argc, char* argv[]) {
   cfg->show_help      = false;
+  cfg->show_version   = false;
   cfg->dry_run        = false;
   cfg->quiet          = false;
   cfg->hash_threshold = 200;
@@ -49,6 +50,11 @@ void process_args(config* cfg, int argc, char* argv[]) {
 
     if ((strcmp(arg, "-h") == 0) || (strcmp(arg, "--help") == 0)) {
       cfg->show_help = true;
+      cfg->quiet     = true;
+      break;
+    } else if ((strcmp(arg, "-v") == 0) || (strcmp(arg, "--version") == 0)) {
+      cfg->show_version = true;
+      cfg->quiet        = true;
       break;
     } else if ((strcmp(arg, "-d") == 0) || (strcmp(arg, "--dry_run") == 0)) {
       cfg->dry_run = true;

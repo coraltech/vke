@@ -19,6 +19,11 @@
 #include <layer.h>  // free_layers
 
 //------------------------------------------------------------------------------
+// Version information
+
+char* vke_version = "1.2";
+
+//------------------------------------------------------------------------------
 // Execution gateway
 
 int main(int argc, char* argv[]) {
@@ -39,6 +44,7 @@ int main(int argc, char* argv[]) {
           " Usage: vke  <source.file>  <key.file | key text | 'prompt'> ...                   ",
           "                                                                                   ",
           "          -h | --help     Display this help information                            ",
+          "          -v | --version  Display VKE version information                          ",
           "          -d | --dry_run  Test encryption / decryption without editing source file ",
           "          -q | --quiet    Suppress all output except errors and warnings           ",
           "                                                                                   ",
@@ -76,6 +82,8 @@ int main(int argc, char* argv[]) {
     }
     errors++;
 
+  } else if (cfg.show_version) {
+	printf("VKE version: %s\n", vke_version);
   } else {
     if (cfg.dry_run && cfg.quiet) {
       output_stream = fopen("/dev/null", "w");
@@ -118,7 +126,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (!finalize(&cfg, &src)) {
+  if (src.data && !finalize(&cfg, &src)) {
     errors++;
   }
   if (!free_layers(&cfg)) {
