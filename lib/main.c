@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
     errors++;
 
   } else if (cfg.show_version) {
-	printf("VKE version: %s\n", vke_version);
+    printf("VKE version: %s\n", vke_version);
   } else {
     if (cfg.dry_run && cfg.quiet) {
       output_stream = fopen("/dev/null", "w");
