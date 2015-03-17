@@ -251,7 +251,7 @@ void sanitize_buffer(obj* key) {
   int index  = 0;
 
   while(index < length) {
-	  key->buff[index] = (key->buff[index] + index) % 255;
+	  key->buff[index] = ((key->buff[index] + index) * key->size) % 255;
 
 	  if (key->buff[index] == 0) {
 	    key->buff[index] = 1;
