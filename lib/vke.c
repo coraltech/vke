@@ -241,6 +241,11 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
 //------------------------------------------------------------------------------
 // Buffer operations
 
+/**
+ * Obfuscate the key buffer bytes
+ * - so no source (hash or file) information shows through
+ * - keep it simple
+ */
 void sanitize_buffer(obj* key) {
   int length = (int)strlen(key->buff);
   int index  = 0;
