@@ -148,6 +148,8 @@ bool check(config* cfg, obj* src, obj* key) {
         key_read = key->size;
       }
 
+      sanitize_buffer(key);
+
       indx = 0;
       while ((indx < src_read) && (indx < key_read)) {
         src->buff[indx] = src->buff[indx] ^ key->buff[indx];
@@ -215,6 +217,8 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
       key_read = key->size;
     }
 
+    sanitize_buffer(key);
+
     indx = 0;
     while ((indx < src_read) && (indx < key_read)) {
       src->buff[indx] = src->buff[indx] ^ key->buff[indx];
@@ -232,6 +236,23 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
     fflush(output_stream);
   }
   return true;
+}
+
+//------------------------------------------------------------------------------
+// Buffer operations
+
+void sanitize_buffer(obj* key) {
+  int length = (int)strlen(key->buff);
+  int index  = 0;
+
+  while(index < length) {
+	  key->buff[index] = (key->buff[index] + index) % 255;
+
+	  if (key->buff[index] == 0) {
+	    key->buff[index] = 1;
+	  }
+	  index++;
+  }
 }
 
 //------------------------------------------------------------------------------

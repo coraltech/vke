@@ -15,6 +15,7 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
 
 bool check(config* cfg, obj* src, obj* key);
 bool combine(config* cfg, obj* src, obj* key, FILE* output_stream);
+void sanitize_buffer(obj* key);
 
 bool finalize(config* cfg, obj* src);
 bool finalize_source(config* cfg, obj* src);
