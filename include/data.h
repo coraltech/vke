@@ -20,8 +20,8 @@ typedef struct obj {
   bool initialized;
   bool is_file;
   FILE* data;
-  unsigned int size;
-  unsigned int indx;
+  size_t size;
+  size_t indx;
   char* buff;
   char* hash;
   char* rev_str;
@@ -48,8 +48,8 @@ typedef struct config {
   bool dry_run;
   bool quiet;
   unsigned int hash_threshold;
-  unsigned int src_indx;
-  unsigned int key_length;
+  size_t src_indx;
+  size_t key_length;
   struct layer* keys;
   clock_t start;
 } config;

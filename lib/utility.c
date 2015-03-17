@@ -36,9 +36,8 @@ char* reverse_string(char* str) {
 
 bool fill_key_buffer(obj* key) {
   if (!key->is_file) {
-    int key_buff_indx = (int)strlen(key->buff);
-
-    int select_indx   = 0;
+    size_t key_buff_indx = strlen(key->buff);
+    size_t select_indx   = 0;
 
     while (key_buff_indx < (buff_size - 1)) {
       key->buff[key_buff_indx] = key->buff[select_indx];

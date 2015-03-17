@@ -32,7 +32,7 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
 
   if (!cfg->quiet) {
     int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-    printf("Initializing: %s [ %i ] (%dsec & %dms)\n", name, indx, msec / 1000, msec % 1000);
+    printf("Initializing: %s [ %u ] (%dsec & %dms)\n", name, indx, msec / 1000, msec % 1000);
   }
 
   if (!(info->buff = (char*) calloc(buff_size, 1))) {
@@ -58,11 +58,11 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
         char confirm_input[1000];
         char* input_buffer;
 
-        sprintf(pass_prompt, "Enter passphrase for key %i: ", indx);
+        sprintf(pass_prompt, "Enter passphrase for key %u: ", indx);
         input_buffer = getpass(pass_prompt);
         strcpy(pass_input, input_buffer);
 
-        sprintf(confirm_prompt, "Confirm passphrase for key %i: ", indx);
+        sprintf(confirm_prompt, "Confirm passphrase for key %u: ", indx);
         input_buffer = getpass(confirm_prompt);
         strcpy(confirm_input, input_buffer);
 
@@ -71,7 +71,7 @@ bool initialize(config* cfg, obj* info, char* name, int indx,
           strcpy(info->buff, pass_input);
           free(input_buffer);
         } else {
-          printf("Passphrase and confirmation for key %i do not match\n\n",
+          printf("Passphrase and confirmation for key %u do not match\n\n",
               indx);
           free(input_buffer);
           return false;
@@ -123,7 +123,7 @@ bool check(config* cfg, obj* src, obj* key) {
 
   if (!cfg->quiet) {
     int msec = ((clock_t)(clock() - cfg->start) * 1000 / CLOCKS_PER_SEC);
-    printf("Verifying success of key %s [ %i ] (%dsec & %dms)\n", key->name, key->size, msec / 1000, msec % 1000);
+    printf("Verifying success of key %s [ %lu ] (%dsec & %dms)\n", key->name, key->size, msec / 1000, msec % 1000);
   }
 
   fseek(src->data, 0, SEEK_SET);
@@ -148,7 +148,7 @@ bool check(config* cfg, obj* src, obj* key) {
         key_read = key->size;
       }
 
-      sanitize_buffer(key);
+      sanitize_buffer(key, key_read);
 
       indx = 0;
       while ((indx < src_read) && (indx < key_read)) {
@@ -217,7 +217,7 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
       key_read = key->size;
     }
 
-    sanitize_buffer(key);
+    sanitize_buffer(key, key_read);
 
     indx = 0;
     while ((indx < src_read) && (indx < key_read)) {
@@ -246,12 +246,11 @@ bool combine(config* cfg, obj* src, obj* key, FILE* output_stream) {
  * - so no source (hash or file) information shows through
  * - keep it simple
  */
-void sanitize_buffer(obj* key) {
-  int length = (int)strlen(key->buff);
+void sanitize_buffer(obj* key, int key_read) {
   int index  = 0;
 
-  while(index < length) {
-	  key->buff[index] = ((key->buff[index] + index) * key->size) % 255;
+  while(index < key_read) {
+	  key->buff[index] = ((key->buff[index] + index) * key_read) % 255;
 
 	  if (key->buff[index] == 0) {
 	    key->buff[index] = 1;
